@@ -4,7 +4,8 @@ Eine statische Webseite, die Buchcover zu einer Liste von ISBNs über die
 [Open-Library-Cover-API](https://openlibrary.org/dev/docs/api/covers) und die
 [Google Books API](https://developers.google.com/books/docs/v1/using) sucht.
 Zuerst wird Open Library abgefragt, anschließend Google Books als Ersatzquelle.
-Gefundene Bilder können einzeln heruntergeladen oder geöffnet werden.
+Gefundene Bilder können einzeln oder gesammelt als ZIP-Datei heruntergeladen
+werden. Dafür müssen die Bilder vom Browser abrufbar sein.
 
 ## Verwendung
 
@@ -24,7 +25,7 @@ Im Projektverzeichnis beispielsweise `python3 -m http.server 8000` ausführen
 und `http://localhost:8000` im Browser öffnen. Die Seite benötigt keinen
 Build-Schritt und keine installierten Pakete.
 
-Die ISBN-Prüfung kann mit `node --test` getestet werden.
+Die ISBN-Prüfung und das ZIP-Archiv können mit `node --test` getestet werden.
 
 ## Auf GitHub Pages veröffentlichen
 

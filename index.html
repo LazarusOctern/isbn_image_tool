@@ -52,9 +52,13 @@
             <span class="step-label">SCHRITT 02</span>
             <h2 id="results-title">Deine Buchcover</h2>
           </div>
-          <span id="results-count" class="results-count"></span>
+          <div class="results-heading-actions">
+            <span id="results-count" class="results-count"></span>
+            <button id="download-all" type="button" class="download-all-button" hidden>Alle Cover als ZIP herunterladen ↓</button>
+          </div>
         </div>
         <p id="search-status" class="sr-only" role="status" aria-live="polite"></p>
+        <p id="zip-status" class="zip-status" role="status" aria-live="polite" hidden></p>
         <div id="empty-state" class="empty-state">
           <div class="empty-icon" aria-hidden="true">
             <svg viewBox="0 0 48 48" fill="none"><rect x="11" y="7" width="26" height="34" rx="3"/><path d="M16 33l6-7 4 4 3-3 4 6H16ZM19 19h.01"/></svg>

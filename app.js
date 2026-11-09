@@ -1,4 +1,5 @@
 import { parseISBNs } from './isbn.mjs';
+import { createZipBlob } from './zip.mjs';
 
 const form = document.querySelector('#search-form');
 const input = document.querySelector('#isbns');
@@ -6,8 +7,11 @@ const results = document.querySelector('#results');
 const emptyState = document.querySelector('#empty-state');
 const count = document.querySelector('#results-count');
 const status = document.querySelector('#search-status');
+const zipButton = document.querySelector('#download-all');
+const zipStatus = document.querySelector('#zip-status');
 let currentSearch;
 let imageURLs = [];
+let coverFiles = new Map();
 
 function makeCard(entry) {
   const card = document.createElement('article');
@@ -109,7 +113,12 @@ async function loadCover(entry, card, signal) {
 
   try {
     const url = cover.blob ? URL.createObjectURL(cover.blob) : cover.imageURL;
-    if (cover.blob) imageURLs.push(url);
+    if (cover.blob) {
+      imageURLs.push(url);
+      coverFiles.set(entry.isbn, { blob: cover.blob });
+    } else {
+      coverFiles.set(entry.isbn, { url });
+    }
     const image = document.createElement('img');
     image.src = url;
     image.alt = `Buchcover zur ISBN ${entry.isbn}`;
@@ -157,6 +166,12 @@ form.addEventListener('submit', async event => {
   currentSearch = controller;
   imageURLs.forEach(url => URL.revokeObjectURL(url));
   imageURLs = [];
+  coverFiles = new Map();
+  zipButton.hidden = true;
+  zipButton.disabled = false;
+  zipButton.textContent = 'Alle Cover als ZIP herunterladen ↓';
+  zipStatus.textContent = '';
+  zipStatus.hidden = true;
   results.replaceChildren();
   emptyState.hidden = true;
   const pending = entries.map(entry => ({ entry, ...makeCard(entry) }));
@@ -181,6 +196,37 @@ form.addEventListener('submit', async event => {
     }
   }
   await Promise.all(Array.from({ length: Math.min(4, queue.length) }, worker));
+  if (!controller.signal.aborted) zipButton.hidden = found === 0;
 });
 
 input.addEventListener('input', () => input.setCustomValidity(''));
+
+zipButton.addEventListener('click', async () => {
+  if (!coverFiles.size) return;
+
+  zipButton.disabled = true;
+  zipButton.textContent = 'ZIP wird erstellt …';
+  zipStatus.hidden = true;
+  try {
+    const files = [];
+    for (const [isbn, cover] of coverFiles) {
+      const blob = cover.blob ?? await fetchImage(cover.url);
+      if (!blob) throw new Error(`Kein Bild für ISBN ${isbn} gefunden.`);
+      files.push({ name: `${isbn}.jpg`, blob });
+    }
+    const archive = await createZipBlob(files);
+    const url = URL.createObjectURL(archive);
+    const download = document.createElement('a');
+    download.href = url;
+    download.download = 'buchcover.zip';
+    download.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  } catch (error) {
+    console.error('ZIP-Download fehlgeschlagen:', error);
+    zipStatus.textContent = `ZIP konnte nicht erstellt werden: ${error.message}`;
+    zipStatus.hidden = false;
+  } finally {
+    zipButton.disabled = false;
+    zipButton.textContent = 'Alle Cover als ZIP herunterladen ↓';
+  }
+});
