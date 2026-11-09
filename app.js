@@ -34,25 +34,82 @@ function makeCard(entry) {
   return { preview, action, card };
 }
 
-async function loadCover(entry, card, signal) {
+async function fetchImage(url, signal) {
+  const response = await fetch(url, { signal });
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  const blob = await response.blob();
+  if (!blob.type.startsWith('image/') || blob.size === 0) {
+    throw new Error('Die Antwort enthält kein Bild.');
+  }
+  return blob;
+}
+
+async function fetchGoogleBooksCover(isbn, signal) {
+  const searchURL = new URL('https://www.googleapis.com/books/v1/volumes');
+  searchURL.searchParams.set('q', `isbn:${isbn}`);
+  const response = await fetch(searchURL, { signal });
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error(`Google Books: HTTP ${response.status}`);
+  const data = await response.json();
+  const imageURL = data.items?.[0]?.volumeInfo?.imageLinks?.thumbnail
+    ?? data.items?.[0]?.volumeInfo?.imageLinks?.smallThumbnail;
+  if (!imageURL) return null;
+  const secureImageURL = imageURL.replace(/^http:/, 'https:');
   try {
-    const response = await fetch(
+    const blob = await fetchImage(secureImageURL, signal);
+    return blob ? { blob } : null;
+  } catch (error) {
+    if (signal.aborted) throw error;
+    return { imageURL: secureImageURL };
+  }
+}
+
+async function loadCover(entry, card, signal) {
+  let cover;
+  let source;
+  let searchError;
+  try {
+    const blob = await fetchImage(
       `https://covers.openlibrary.org/b/isbn/${encodeURIComponent(entry.isbn)}-L.jpg?default=false`,
-      { signal }
+      signal
     );
-    if (response.status === 404) {
-      card.preview.firstElementChild.textContent = 'Kein Cover gefunden';
-      card.action.textContent = 'Für diese ISBN ist kein Cover verfügbar.';
-      return false;
+    if (blob) {
+      cover = { blob };
+      source = 'Open Library';
     }
-    if (!response.ok) throw new Error(`Open Library: HTTP ${response.status}`);
-    const blob = await response.blob();
-    if (!blob.type.startsWith('image/') || blob.size === 0) {
-      throw new Error('Die Antwort enthält kein Bild.');
-    }
+  } catch (error) {
     if (signal.aborted) return false;
-    const url = URL.createObjectURL(blob);
-    imageURLs.push(url);
+    searchError = error;
+    console.warn('Open-Library-Suche fehlgeschlagen:', error);
+  }
+
+  if (!cover) {
+    try {
+      cover = await fetchGoogleBooksCover(entry.isbn, signal);
+      if (cover) source = 'Google Books';
+    } catch (error) {
+      if (signal.aborted) return false;
+      searchError ??= error;
+      console.warn('Google-Books-Suche fehlgeschlagen:', error);
+    }
+  }
+
+  if (signal.aborted) return false;
+  if (!cover) {
+    if (searchError) {
+      card.preview.firstElementChild.textContent = 'Suche fehlgeschlagen';
+      card.action.textContent = 'Verbindung fehlgeschlagen. Bitte später erneut versuchen.';
+    } else {
+      card.preview.firstElementChild.textContent = 'Kein Cover gefunden';
+      card.action.textContent = 'Für diese ISBN ist bei Open Library und Google Books kein Cover verfügbar.';
+    }
+    return false;
+  }
+
+  try {
+    const url = cover.blob ? URL.createObjectURL(cover.blob) : cover.imageURL;
+    if (cover.blob) imageURLs.push(url);
     const image = document.createElement('img');
     image.src = url;
     image.alt = `Buchcover zur ISBN ${entry.isbn}`;
@@ -61,9 +118,21 @@ async function loadCover(entry, card, signal) {
     const download = document.createElement('a');
     download.className = 'download-link';
     download.href = url;
-    download.download = `${entry.isbn}.jpg`;
-    download.textContent = 'Cover herunterladen ↓';
+    if (cover.blob) {
+      download.download = `${entry.isbn}.jpg`;
+      download.textContent = `Cover herunterladen ↓ (${source})`;
+    } else {
+      download.target = '_blank';
+      download.rel = 'noopener noreferrer';
+      download.textContent = `Cover öffnen / herunterladen ↗ (${source})`;
+    }
     card.action.replaceChildren(download);
+    if (!cover.blob) {
+      image.addEventListener('error', () => {
+        card.preview.textContent = 'Cover konnte nicht geladen werden';
+        card.action.textContent = 'Das Bild ist bei Google Books derzeit nicht erreichbar.';
+      }, { once: true });
+    }
     return true;
   } catch (error) {
     if (signal.aborted) return false;
