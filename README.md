@@ -1,8 +1,10 @@
 # ISBN Cover Finder
 
 Eine statische Webseite, die Buchcover zu einer Liste von ISBNs über die
-[Open-Library-Cover-API](https://openlibrary.org/dev/docs/api/covers) sucht.
-Gefundene Bilder können einzeln heruntergeladen werden.
+[Open-Library-Cover-API](https://openlibrary.org/dev/docs/api/covers) und die
+[Google Books API](https://developers.google.com/books/docs/v1/using) sucht.
+Zuerst wird Open Library abgefragt, anschließend Google Books als Ersatzquelle.
+Gefundene Bilder können einzeln heruntergeladen oder geöffnet werden.
 
 ## Verwendung
 
@@ -12,9 +14,9 @@ erlaubt. Ungültige ISBNs und fehlende Cover werden angezeigt; doppelte ISBNs
 werden nur einmal gesucht.
 
 Die Suche benötigt eine Internetverbindung. Die eingegebenen ISBNs werden
-für die Cover-Suche an Open Library übermittelt. Nicht für jedes Buch ist
-dort ein Cover vorhanden. Beachte bei der Weiterverwendung der Bilder die
-jeweiligen Urheberrechte.
+für die Cover-Suche an Open Library und Google Books übermittelt. Auch dort
+ist nicht für jedes Buch ein Cover vorhanden. Beachte bei der Weiterverwendung
+der Bilder die jeweiligen Urheberrechte.
 
 ## Lokal starten
 
