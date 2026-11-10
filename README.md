@@ -17,7 +17,9 @@ werden nur einmal gesucht.
 Die Suche benötigt eine Internetverbindung. Die eingegebenen ISBNs werden
 für die Cover-Suche an Open Library und Google Books übermittelt. Auch dort
 ist nicht für jedes Buch ein Cover vorhanden. Beachte bei der Weiterverwendung
-der Bilder die jeweiligen Urheberrechte.
+der Bilder die jeweiligen Urheberrechte. Anfragen laufen einzeln; bei HTTP 429
+wird eine mitgesendete `Retry-After`-Wartezeit berücksichtigt und die andere
+Cover-Quelle versucht.
 
 ## Excel-Import
 

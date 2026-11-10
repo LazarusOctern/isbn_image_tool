@@ -145,7 +145,7 @@ form.addEventListener('submit', async event => {
       updateStatus();
     }
   }
-  await Promise.all(Array.from({ length: Math.min(4, queue.length) }, worker));
+  await worker();
   if (!controller.signal.aborted) zipButton.hidden = found === 0;
 });
 

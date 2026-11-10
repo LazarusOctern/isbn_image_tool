@@ -43,3 +43,44 @@ test('reports provider failures rather than declaring a missing cover', async t 
   t.mock.method(globalThis, 'fetch', async () => new Response(null, { status: 429 }));
   await assert.rejects(findCover('9780140328721'), /HTTP 429/);
 });
+
+test('falls back to Google Books on a 429 and honors Retry-After for the limited source', async t => {
+  const calls = [];
+  const responses = [
+    new Response(null, { status: 429, headers: { 'Retry-After': '1' } }),
+    booksResponse(),
+    imageResponse(),
+    new Response(null, { status: 404 }),
+    new Response(null, { status: 404 }),
+  ];
+  t.mock.method(globalThis, 'fetch', async url => {
+    calls.push({ url: String(url), time: Date.now() });
+    return responses.shift();
+  });
+
+  const cover = await findCover('9780140328721', { requireBlob: true });
+  assert.equal(cover.source, 'Google Books');
+  await findCover('9780140328721');
+
+  const secondOpenLibraryRequest = calls.findLast(call => call.url.includes('openlibrary'));
+  assert.ok(secondOpenLibraryRequest.time - calls[0].time >= 900);
+});
+
+test('serializes requests from concurrent cover searches', async t => {
+  let activeRequests = 0;
+  let maxActiveRequests = 0;
+  t.mock.method(globalThis, 'fetch', async () => {
+    activeRequests++;
+    maxActiveRequests = Math.max(maxActiveRequests, activeRequests);
+    await new Promise(resolve => setTimeout(resolve, 5));
+    activeRequests--;
+    return new Response(null, { status: 404 });
+  });
+
+  await Promise.all([
+    findCover('9780140328721'),
+    findCover('9780804429573'),
+    findCover('9783257230289'),
+  ]);
+  assert.equal(maxActiveRequests, 1);
+});
