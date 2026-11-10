@@ -1,0 +1,45 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { findCover } from '../covers.mjs';
+
+const imageResponse = () => new Response(new Blob(['image'], { type: 'image/png' }));
+const booksResponse = () => Response.json({
+  items: [{ volumeInfo: { imageLinks: { thumbnail: 'http://example.test/cover.png' } } }],
+});
+
+test('returns Open Library blobs without querying Google Books', async t => {
+  const fetchMock = t.mock.method(globalThis, 'fetch', async () => imageResponse());
+  const cover = await findCover('9780140328721', { requireBlob: true });
+  assert.equal(cover.source, 'Open Library');
+  assert.equal(cover.blob.type, 'image/png');
+  assert.equal(fetchMock.mock.callCount(), 1);
+});
+
+test('uses Google Books and upgrades thumbnail URLs to HTTPS', async t => {
+  const responses = [new Response(null, { status: 404 }), booksResponse(), imageResponse()];
+  const fetchMock = t.mock.method(globalThis, 'fetch', async () => responses.shift());
+  const cover = await findCover('9780140328721', { requireBlob: true });
+  assert.equal(cover.source, 'Google Books');
+  assert.equal(fetchMock.mock.calls[2].arguments[0], 'https://example.test/cover.png');
+});
+
+test('retains the display-only fallback but rejects inaccessible images for Excel', async t => {
+  t.mock.method(globalThis, 'fetch', async url => {
+    if (String(url).includes('openlibrary')) return new Response(null, { status: 404 });
+    if (String(url).includes('googleapis')) return booksResponse();
+    throw new TypeError('Image download blocked');
+  });
+  const cover = await findCover('9780140328721');
+  assert.equal(cover.imageURL, 'https://example.test/cover.png');
+  await assert.rejects(findCover('9780140328721', { requireBlob: true }), /Image download blocked/);
+});
+
+test('distinguishes no cover from provider errors', async t => {
+  t.mock.method(globalThis, 'fetch', async () => new Response(null, { status: 404 }));
+  assert.equal(await findCover('9780140328721'), null);
+});
+
+test('reports provider failures rather than declaring a missing cover', async t => {
+  t.mock.method(globalThis, 'fetch', async () => new Response(null, { status: 429 }));
+  await assert.rejects(findCover('9780140328721'), /HTTP 429/);
+});

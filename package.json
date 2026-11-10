@@ -1,0 +1,12 @@
+{
+  "name": "isbn-cover-finder",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "exceljs": "4.4.0"
+  }
+}

@@ -1,5 +1,6 @@
 import { parseISBNs } from './isbn.mjs';
 import { createZipBlob } from './zip.mjs';
+import { fetchImage, findCover } from './covers.mjs';
 
 const form = document.querySelector('#search-form');
 const input = document.querySelector('#isbns');
@@ -38,65 +39,14 @@ function makeCard(entry) {
   return { preview, action, card };
 }
 
-async function fetchImage(url, signal) {
-  const response = await fetch(url, { signal });
-  if (response.status === 404) return null;
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  const blob = await response.blob();
-  if (!blob.type.startsWith('image/') || blob.size === 0) {
-    throw new Error('Die Antwort enthält kein Bild.');
-  }
-  return blob;
-}
-
-async function fetchGoogleBooksCover(isbn, signal) {
-  const searchURL = new URL('https://www.googleapis.com/books/v1/volumes');
-  searchURL.searchParams.set('q', `isbn:${isbn}`);
-  const response = await fetch(searchURL, { signal });
-  if (response.status === 404) return null;
-  if (!response.ok) throw new Error(`Google Books: HTTP ${response.status}`);
-  const data = await response.json();
-  const imageURL = data.items?.[0]?.volumeInfo?.imageLinks?.thumbnail
-    ?? data.items?.[0]?.volumeInfo?.imageLinks?.smallThumbnail;
-  if (!imageURL) return null;
-  const secureImageURL = imageURL.replace(/^http:/, 'https:');
-  try {
-    const blob = await fetchImage(secureImageURL, signal);
-    return blob ? { blob } : null;
-  } catch (error) {
-    if (signal.aborted) throw error;
-    return { imageURL: secureImageURL };
-  }
-}
-
 async function loadCover(entry, card, signal) {
   let cover;
-  let source;
   let searchError;
   try {
-    const blob = await fetchImage(
-      `https://covers.openlibrary.org/b/isbn/${encodeURIComponent(entry.isbn)}-L.jpg?default=false`,
-      signal
-    );
-    if (blob) {
-      cover = { blob };
-      source = 'Open Library';
-    }
+    cover = await findCover(entry.isbn, { signal });
   } catch (error) {
     if (signal.aborted) return false;
     searchError = error;
-    console.warn('Open-Library-Suche fehlgeschlagen:', error);
-  }
-
-  if (!cover) {
-    try {
-      cover = await fetchGoogleBooksCover(entry.isbn, signal);
-      if (cover) source = 'Google Books';
-    } catch (error) {
-      if (signal.aborted) return false;
-      searchError ??= error;
-      console.warn('Google-Books-Suche fehlgeschlagen:', error);
-    }
   }
 
   if (signal.aborted) return false;
@@ -129,11 +79,11 @@ async function loadCover(entry, card, signal) {
     download.href = url;
     if (cover.blob) {
       download.download = `${entry.isbn}.jpg`;
-      download.textContent = `Cover herunterladen ↓ (${source})`;
+      download.textContent = `Cover herunterladen ↓ (${cover.source})`;
     } else {
       download.target = '_blank';
       download.rel = 'noopener noreferrer';
-      download.textContent = `Cover öffnen / herunterladen ↗ (${source})`;
+      download.textContent = `Cover öffnen / herunterladen ↗ (${cover.source})`;
     }
     card.action.replaceChildren(download);
     if (!cover.blob) {
