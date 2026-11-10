@@ -66,6 +66,9 @@ export async function fetchImage(url, signal) {
 async function fetchGoogleBooksCover(isbn, signal, requireBlob) {
   const searchURL = new URL('https://www.googleapis.com/books/v1/volumes');
   searchURL.searchParams.set('q', `isbn:${isbn}`);
+  if (globalThis.GOOGLE_BOOKS_API_KEY) {
+    searchURL.searchParams.set('key', globalThis.GOOGLE_BOOKS_API_KEY);
+  }
   const data = await request(searchURL, signal, async response => {
     if (response.status === 404) return null;
     if (!response.ok) throw httpError(response, 'Google Books');

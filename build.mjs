@@ -10,4 +10,8 @@ for (const file of [
 }
 await copyFile('node_modules/exceljs/dist/exceljs.min.js', 'dist/assets/exceljs.min.js');
 await copyFile('node_modules/exceljs/LICENSE', 'dist/assets/exceljs.LICENSE');
+await writeFile(
+  'dist/config.js',
+  `globalThis.GOOGLE_BOOKS_API_KEY = ${JSON.stringify(process.env.GOOGLE_BOOKS_API_KEY ?? '')};\n`
+);
 await writeFile('dist/.nojekyll', '');

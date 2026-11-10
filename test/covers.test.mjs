@@ -23,6 +23,27 @@ test('uses Google Books and upgrades thumbnail URLs to HTTPS', async t => {
   assert.equal(fetchMock.mock.calls[2].arguments[0], 'https://example.test/cover.png');
 });
 
+test('adds the configured API key to Google Books requests', async t => {
+  const previousKey = globalThis.GOOGLE_BOOKS_API_KEY;
+  globalThis.GOOGLE_BOOKS_API_KEY = 'test-key';
+  t.after(() => {
+    if (previousKey === undefined) delete globalThis.GOOGLE_BOOKS_API_KEY;
+    else globalThis.GOOGLE_BOOKS_API_KEY = previousKey;
+  });
+  const fetchMock = t.mock.method(globalThis, 'fetch', async url => {
+    if (String(url).includes('openlibrary')) return new Response(null, { status: 404 });
+    if (String(url).includes('googleapis')) {
+      assert.equal(new URL(url).searchParams.get('key'), 'test-key');
+      return booksResponse();
+    }
+    return imageResponse();
+  });
+
+  const cover = await findCover('9780140328721', { requireBlob: true });
+  assert.equal(cover.source, 'Google Books');
+  assert.equal(fetchMock.mock.callCount(), 3);
+});
+
 test('retains the display-only fallback but rejects inaccessible images for Excel', async t => {
   t.mock.method(globalThis, 'fetch', async url => {
     if (String(url).includes('openlibrary')) return new Response(null, { status: 404 });

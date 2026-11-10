@@ -21,6 +21,12 @@ der Bilder die jeweiligen Urheberrechte. Anfragen laufen einzeln; bei HTTP 429
 wird eine mitgesendete `Retry-After`-Wartezeit berücksichtigt und die andere
 Cover-Quelle versucht.
 
+Für einen Google-Books-API-Schlüssel kann im GitHub-Repository das Actions-
+Secret `GOOGLE_BOOKS_API_KEY` hinterlegt werden. Der Pages-Build fügt ihn der
+Google-Books-Anfrage hinzu. Da die Seite statisch ist, wird der Schlüssel dabei
+im Browser sichtbar; beschränke ihn in Google Cloud auf die Books API und die
+Pages-Domain. Ohne Secret funktioniert die Suche weiterhin ohne API-Schlüssel.
+
 ## Excel-Import
 
 Alternativ eine `.xlsx`-Datei hochladen. Im **ersten Tabellenblatt** stehen die
