@@ -19,13 +19,47 @@ für die Cover-Suche an Open Library und Google Books übermittelt. Auch dort
 ist nicht für jedes Buch ein Cover vorhanden. Beachte bei der Weiterverwendung
 der Bilder die jeweiligen Urheberrechte.
 
+## Excel-Import
+
+Alternativ eine `.xlsx`-Datei hochladen. Im **ersten Tabellenblatt** stehen die
+Buch-GTINs (ISBN-13) oder ISBN-10 in **Spalte A**. Eine Überschrift `GTIN`, `EAN`
+oder `ISBN` in A1 ist erlaubt. Auch als Zahlen gespeicherte ISBN-13 werden
+erkannt, selbst wenn Excel sie in wissenschaftlicher Schreibweise anzeigt.
+
+Mit **Cover in Excel einfügen** werden herunterladbare Cover als echte Bilder
+in **Spalte B derselben Zeile** eingebettet, nicht nur verlinkt. Anschließend
+steht die Datei als `…-mit-covern.xlsx` zum Download bereit. Zeilenhöhen und
+die Breite von B werden bei Bedarf vergrößert. Die restlichen Zellwerte,
+Formeln und Tabellenblätter bleiben erhalten. Bereits belegte Zellen in B
+werden übersprungen; verbundene Zellen in B müssen zuerst aufgelöst werden.
+Nicht gefundene Cover, ungültige ISBNs und Downloadfehler werden mit
+Zeilennummer angezeigt. Doppelte ISBNs werden nur einmal abgefragt, ihre Cover
+aber in jeder passenden Zeile eingefügt.
+
+Die Verarbeitung erfolgt im Browser mit ExcelJS. Die Excel-Datei wird nicht
+hochgeladen; nur die ISBNs werden an Open Library und Google Books gesendet.
+GTINs anderer Produkte werden derzeit nicht unterstützt. Bilder, die wegen
+Browser-Zugriffsbeschränkungen nur angezeigt, aber nicht heruntergeladen werden
+können, lassen sich nicht in die Datei einbetten. Komplexe Excel-Funktionen
+wie eingebettete Objekte oder spezielle Diagramme werden von ExcelJS nicht
+vollständig unterstützt; für solche Dateien eine Kopie verwenden.
+
 ## Lokal starten
 
-Im Projektverzeichnis beispielsweise `python3 -m http.server 8000` ausführen
-und `http://localhost:8000` im Browser öffnen. Die Seite benötigt keinen
-Build-Schritt und keine installierten Pakete.
+Mit Node.js 22 oder neuer im Projektverzeichnis:
 
-Die ISBN-Prüfung und das ZIP-Archiv können mit `node --test` getestet werden.
+```sh
+npm ci
+npm run build
+python3 -m http.server 8000 --directory dist
+```
+
+Dann `http://localhost:8000` im Browser öffnen. Der Build kopiert die statische
+Webseite und die lokal ausgelieferte ExcelJS-Bibliothek nach `dist/`; es wird
+kein Anwendungsserver benötigt.
+
+Die ISBN-Prüfung, Cover-Suche, Excel-Verarbeitung und das ZIP-Archiv können
+mit `npm test` getestet werden.
 
 ## Auf GitHub Pages veröffentlichen
 

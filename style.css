@@ -9,9 +9,9 @@
 }
 * { box-sizing: border-box; }
 body { margin: 0; }
-button, textarea { font: inherit; }
+button, textarea, input { font: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }
-button:focus-visible, a:focus-visible, textarea:focus-visible { outline: 3px solid #9db69a; outline-offset: 3px; }
+button:focus-visible, a:focus-visible, textarea:focus-visible, input:focus-visible { outline: 3px solid #9db69a; outline-offset: 3px; }
 .page { max-width: 1152px; padding: 0 44px; margin: auto; }
 .site-header { height: 91px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e3e5dc; }
 .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: #26332c; font-weight: 700; font-size: 15px; letter-spacing: -.3px; }
@@ -41,7 +41,14 @@ textarea::placeholder { color: #aab4aa; opacity: 1; }
 .form-footer p span { color: #8ca48d; font-size: 14px; margin-right: 4px; }
 .primary-button { flex-shrink: 0; border: 0; border-radius: 6px; padding: 13px 19px; background: #3a6049; color: #fff; font-size: 12px; font-weight: 700; cursor: pointer; }
 .primary-button:hover { background: #2b4d38; }
+.primary-button:disabled { opacity: .65; cursor: wait; }
 .primary-button span { margin-left: 20px; font-size: 16px; }
+.excel-panel { margin-top: 24px; }
+.excel-help { margin-top: 14px; color: #66776b; font-size: 12px; line-height: 1.7; }
+#excel-file { max-width: 100%; font-size: 12px; }
+.excel-report { max-height: 220px; overflow-y: auto; padding-left: 20px; color: #9a5d40; font-size: 12px; line-height: 1.7; }
+#excel-download { display: inline-block; margin-top: 12px; font-size: 13px; }
+#excel-download[hidden] { display: none; }
 .results-section { max-width: 780px; margin: 65px auto 80px; }
 .results-heading { margin-bottom: 20px; }
 .results-heading-actions { display: flex; align-items: center; gap: 14px; }

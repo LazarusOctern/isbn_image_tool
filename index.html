@@ -8,6 +8,7 @@
   <title>ISBN Cover Finder</title>
   <link rel="stylesheet" href="style.css">
   <script type="module" src="app.js"></script>
+  <script type="module" src="excel-ui.js"></script>
 </head>
 <body>
   <div class="page">
@@ -44,6 +45,25 @@
             <button type="submit" class="primary-button">Cover suchen <span aria-hidden="true">→</span></button>
           </div>
         </form>
+      </section>
+
+      <section class="search-panel excel-panel" aria-labelledby="excel-title">
+        <div class="panel-heading">
+          <h2 id="excel-title">Alternativ: Excel-Datei hochladen</h2>
+          <span class="format-tag">.xlsx</span>
+        </div>
+        <p id="excel-help" class="excel-help">Im ersten Tabellenblatt: Buch-GTIN / ISBN in Spalte A, Platz für Cover in Spalte B. Andere Spalten und Tabellenblätter bleiben erhalten. Vorhandene Inhalte in B werden nicht überschrieben.</p>
+        <form id="excel-form">
+          <label for="excel-file">Deine Excel-Datei</label>
+          <input id="excel-file" type="file" accept=".xlsx" aria-describedby="excel-help" required>
+          <div class="form-footer">
+            <p>Die Datei bleibt im Browser. Nur ISBNs werden an die Cover-Quellen gesendet.</p>
+            <button id="excel-submit" type="submit" class="primary-button">Cover in Excel einfügen</button>
+          </div>
+        </form>
+        <p id="excel-status" class="excel-help" role="status" aria-live="polite"></p>
+        <ul id="excel-report" class="excel-report"></ul>
+        <a id="excel-download" class="download-link" hidden>Excel-Datei mit Bildern herunterladen ↓</a>
       </section>
 
       <section class="results-section" aria-labelledby="results-title">
