@@ -48,7 +48,7 @@ form.addEventListener('submit', async event => {
   fileInput.disabled = true;
   try {
     if (!/\.xlsx$/i.test(file.name)) throw new Error('Bitte eine .xlsx-Datei auswählen.');
-    await import('./vendor/exceljs.min.js');
+    await import('./assets/exceljs.min.js');
     const workbook = new globalThis.ExcelJS.Workbook();
     await workbook.xlsx.load(await file.arrayBuffer());
     const outcome = await insertCovers(workbook, {
